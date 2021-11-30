@@ -1,0 +1,139 @@
+---
+title: Point In Time Recovery
+weight: 100
+last_reviewed_on: 2021-11-30
+review_in: 1 year
+hide_in_navigation: true
+link_in_toc: true
+summary: Database Point in Time Recovery
+---
+
+#  <%= current_page.data.title %>
+
+The below steps can be used to restore a database to its point in time backup.
+We can restore to any point from 5 minutes to 7 days ago, with a resolution of one second.
+
+## Prerequisites
+How to install the Azure CLI
+
+  * V7 CLI Installation Guide · cloudfoundry/cli Wiki
+  * Terraform [Download specific version from Terraform Versions | HashiCorp Releases]
+  * psql github-actions/action.yml at master · DFE-Digital/github-actions
+  * cf conduit plugin ```cf install-plugin conduit -f```
+
+For terraform version, check the .tool-versions file in the root of the repo of the service under question
+or the terraform version used in the “Pin terraform version” step in  ./.github/workflows/deploy.yml.
+
+## Identify the space the database service exists
+We must first identify the space under which the service exists inside the dfe org.
+
+The user will also need to raise a PIM request in the Azure Portal if the service being changed exists in  a space other than bat-qa.
+
+## Adding the user to SpaceDeveloper role
+The user must be in the SpaceDeveloper role to perform any of the below actions.
+A user can be added to the SpaceDeveloper role by anyone in the SpaceManager role using the below command
+
+
+```
+~> cf set-space-role <firstname.lastname@digital.education.gov.uk|Google SSO UID> dfe <space-name> SpaceDeveloper
+# Or the below make command in Apply
+~> make <ENV> set-space-developer USER_ID=<user id obtained from `cf target`>
+```
+The user name of the person being added to the role can be obtained by asking them to run cf target, this is usually their @digital.education.gov.uk email address unless they have enabled Google SSO in their GovUK PaaS account.
+
+## Restoring from a point in time backup
+### Set the correct space context
+
+Set the context for the cf cli commands to the space under which the service exists.
+
+
+```
+cf target -s <bat-qa|bat-staging|bat-prod>
+```
+
+### Stop any apps bound to the database service instance
+
+Stop all apps (web and background workers) that depend on the database service instance using the cf stop command. The app names can be obtained by running cf apps. Turn on the maintenance mode (if it exists) for the web app.
+For apply this can be achieved by running the below make command
+
+
+```
+make <ENV> stop-all-apps CONFIRM_STOP=1
+```
+
+### Identify the service instance’s GUID
+Find the name of the database service instance which has been corrupted, this can be identified from the list obtained by running cf services. In BaT the database services usually follow this naming convention APPLICATION-postgres-ENV  for example, register-postgres-qa, apply-postgres-qa, etc.
+
+### Grab the database service instance’s GUID by running
+Once the service instance’s name is known, we can get the GUID by running the below command
+
+```
+~> cf service <db-service-instance-name> --guid
+# for Apply this can be retrieved using the below make command
+~> make <ENV> get-postgres-instance-guid
+After this we need to know the latest timestamp in UTC from before which point we want to restore using the backup.
+```
+
+### Create database service instance from backup using terraform
+We will now rename the affected service using the below command
+
+
+```
+~> cf rename-service <db-service-instance-name> <db-service-instance-name>-old
+# or for Apply use the below make command
+~> make <ENV> rename-postgres-service CONFIRM_RENAME=1 NEW_NAME_SUFFIX=old
+```
+
+This is because as part of the recovery process we will recreate the service using the same name as before with the backup parameters in one terraform action.
+
+Obtain a passcode from Sign in to GOV.UK PaaS  [https://login.london.cloud.service.gov.uk/passcode]
+Login to azure from the azure cli if not previously logged in az login , this will take you to the azure portal to authenticate the cli. This is required for reading the terraform state and KeyVault secrets.
+
+
+Remove the existing database service from the apps terraform state by running the below command:
+
+```
+~> make <ENV> remove-postgres-tf-state IMAGE_TAG=main PASSCODE=<CF_SSO_PASSCODE>
+```
+
+Run terraform deploy to create the database service instance from the backup
+Please note in the below command, the timestamp is in UTC, so if we are in BST, make sure to offset the hour by 1, ie: 5:00 PM BST would be 4:00 GMT during summer.
+
+```
+~> make <ENV> restore-postgres IMAGE_TAG=<COMMIT_SHA> PASSCODE=<CF_SSO_PASSCODE> DB_INSTANCE_GUID=<> BEFORE_TIME="<UTC_TIMESTAMP>"
+# COMMIT_SHA is the current version of the app deployed to that environment, get from /sha or /check
+# COMMIT_SHA can also be picked up by running `cf app APP_NAME`
+# CF_SSO_PASSCODE from https://login.london.cloud.service.gov.uk/passcode
+# DB_INSTANCE_GUID obtained from Step 2 (make <ENV> get-postgres-instance-guid)
+# BEFORE_TIME: Timestamp in UTC, just moments before the incident happened (format 2021-09-14 16:00:00)
+```
+
+Review the generated deploy plan and check that the database instance will be created using the specified point in time backup.
+
+Make sure there are no changes to the docker_image property of the apps as we deploying the apps again with the same version as before the incident.
+
+Once the plan is reviewed type yes to initiate the deployment process. This process can take between 10 and 60 mins to complete.  When this is in progress, you can run ```cf service <db-instance-name>``` to check the progress.
+
+The database service instance will be created and the dependant apps will be started on successful completion.
+
+
+Once you are happy that the backup has worked, delete the old database service instance by running the below command:
+
+Delete any left over service-keys and binding for the database instance
+
+
+```
+~> cf service-keys <db-service-instance-name>-old
+# will list any service keys, which can be deleted using the below command
+~> cf delete-service-key <db-service-instance-name>-old <service-key-name>
+# App Bindings
+~> cf service <db-service-instance-name>-old
+# this will list any app that are still bound to the service, which can be removed using
+~> cf unbind-service <APP_NAME> <db-service-instance-name>-old
+```
+
+the database service instance can then be deleted by running
+
+```
+~> cf delete-service <db-service-instance-name>-old # The new name given earlier in Step 3
+```

@@ -1,0 +1,49 @@
+---
+title: Templates
+weight: 10
+last_reviewed_on: 2021-11-30
+review_in: 1 year
+hide_in_navigation: true
+link_in_toc: true
+summary: Using Jinja templates
+---
+
+#  <%= current_page.data.title %>
+
+Sometimes you need to pass variables or configuration through to the system being delivered to, to carry this out a developer can use Jinja
+
+Example:
+Below is an example template for a manifest file, named manifest.yml.j2 it contains a number of variables we want to expand.
+
+```
+---
+applications:
+- name: {{APPLICATION}}
+  memory: 256M
+  docker:
+    image: {{DOCKER_IMAGE}}
+  env:
+    HTTPAUTH_PASSWORD: {{HTTPAUTH_PASSWORD}}
+    HTTPAUTH_USERNAME: {{HTTPAUTH_USERNAME}}
+    RAILS_MASTER_KEY:  {{RAILS_MASTER_KEY}}
+    RAILS_ENV:         {{RAILS_ENV|default('production')}}
+```
+
+In our Action file, we need to convert our manifest.yml.j2 file into a manifest.ym file, with the variables set.
+
+```
+      - name: Deploy Built Image
+        uses: cuchi/jinja2-action@v1.1.0
+        with:
+          template:  manifest.yml.j2
+          output_file:  manifest.yml
+          variables: |
+              HTTPAUTH_PASSWORD="${{ secrets.HTTPAUTH_PASSWORD }}"
+              HTTPAUTH_USERNAME="${{ secrets.HTTPAUTH_USERNAME }}"
+              RAILS_MASTER_KEY="${{ secrets.RAILS_MASTER_KEY_ROLLING }}"
+              RAILS_ENV="rolling"
+              APPLICATION="${{env.CONTAINER}}"
+              DOCKER_IMAGE=${{env.DOCKERHUB_REPOSITORY}}:sha-${{ steps.sha.outputs.short}}
+```
+
+In the above example you can see how we have used GITHUB secrets to populate some of the values, as well as other variables from the pipeline.

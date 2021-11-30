@@ -1,0 +1,61 @@
+---
+title: Logit Slack Alerts 
+weight: 10
+last_reviewed_on: 2021-11-30
+review_in: 1 year
+hide_in_navigation: true
+link_in_toc: true
+summary: 
+---
+
+#  <%= current_page.data.title %>
+
+## Slack Alerts
+Alerts in logit.io can be configured to be sent to various applications, in this case we want to send our Errors to Slack.io
+
+### Configure Slack
+You will need to have administrator access to a Slack workspace to create an Incoming Webhook or ask <%= digital_tools_support %> to provide you one.
+
+In the Apps area of your workspace, you will need to add the Incoming Webhook App. 
+
+Configure it to use the channel you require, and capture the web hook it provides, as shown in the example below:
+
+```
+https://hooks.slack.com/services/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
+```
+
+### Create an Alert
+A word of caution, I set this all up on my own Slack account first to test it. It can cause a swarm of Slack messages
+
+Return to logit.io and in the Settings/Alerts menu, you will be able to create a new Alert or amend an existing alert.
+
+Here you need to create your alert; for example:
+
+```
+name: Test App Errors
+
+type: any
+
+index: logstash-*
+
+filter:
+- query:
+    query_string:
+      query: "syslog_severity:error"
+
+## Receive an alert for every single match
+realert:
+  minutes: 10
+  
+generate_kibana_link: true
+
+# (Required)
+# The alert used when a match is found
+alert:
+- "slack"
+
+## Live alerts channel
+slack_webhook_url:
+- https://hooks.slack.com/services/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
+```
+

@@ -45,4 +45,19 @@ Then make a pull request and inform maintainers in the `#architecture` Slack cha
 Secondary pages related to a guidance may be created in the same directory as `<title>.html.md.erb`. To hide them from the sidebar navigation, add
 field `hide_in_navigation: true` to the page header.
 
+## Helpers
+
+The following helpers have been created:
+
+|Name                   |Usage|
+|-----------------------|-----|
+|digital_tools_support  | Provides a link to the contact details for the Digital Tools Support team
+|infrastructure_support | Provides a link to the contact details for the Infrastructure Support team
+|uk_gov_paas            | Provides a link to the GOV.UK Platform as a Service documentation 
+
+### Usage
+<%%= digital_tools_support %>
+
+## Review
+
 The guidance must be reviewed and updated before the expiration date.

@@ -1,0 +1,56 @@
+---
+title: Dependabot
+weight: 10
+last_reviewed_on: 2021-11-30
+review_in: 1 year
+hide_in_navigation: true
+link_in_toc: true
+summary: Using Dependabot to keep Github actions up to date
+---
+
+#  <%= current_page.data.title %>
+
+
+GitHub actions are generally supplied by the Marketplace and can occasionallly become out of date. To help prevent this you can use the GitHub Dependabot tool.
+
+This is based on the documentation provide by GitHub Dependabot
+
+Create or amend the .github/dependabot.yml file and add in the following section:
+
+```
+version: 2
+updates:
+  # Maintain dependencies for GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "daily"
+```
+A more complete file for a ruby project could look like:
+
+
+```
+version: 2
+updates:
+
+  - package-ecosystem: bundler
+    directory: /
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+
+  # Maintain dependencies for GitHub Actions
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: daily
+```

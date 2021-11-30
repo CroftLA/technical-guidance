@@ -1,0 +1,48 @@
+---
+title: ACT
+weight: 10
+last_reviewed_on: 2021-11-30
+review_in: 1 year
+hide_in_navigation: true
+link_in_toc: true
+summary: A tool to run GitHub Actions from the command line. 
+---
+
+#  <%= current_page.data.title %>
+
+ACT is a useful tool allowing you to run GitHub Actions from your command line, prior to having to check them into GitHub and run them on the server.
+
+## Installation
+To install follow the instructions at [nektos/act]( https://github.com/nektos/act )
+
+* offers installation options using brew, chocolatey
+
+## Tips
+To use secrets you will need to use the Shell export command and create environment variables for example:
+
+```
+export GOVUKPAAS_USERNAME=<GOVUKPAAS_USERNAME>
+export GOVUKPAAS_PASSWORD=<GOVUKPAAS_PASSWORD>
+export DOCKERHUB_USERNAME=<USERNAME>
+export DOCKERHUB_PERSONAL_ACCESS_TOKEN=<DOCKERHUB_PERSONAL_ACCESS_TOKEN>
+```
+
+Then you are able to run the act command line; from the root of the cloned repository:
+
+```
+pwd
+/Users/dummy/dfe/get-into-teaching-api
+
+act -s DOCKERHUB_USERNAME -s DOCKERHUB_PERSONAL_ACCESS_TOKEN -s GOVUKPAAS_USERNAME -s GOVUKPAAS_PASSWORD
+```
+
+If your action refers to the commit SHA, you will need need to supply this as an environment variable before running the act command
+
+
+```
+vi test.env
+<< GITHUB_SHA=ad46c15da83d85b9f97d7bbcbac6f2fc3e24efa7
+
+act --env-file test.env -s GOVUKPAAS_PASSWORD ...
+
+```

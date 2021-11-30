@@ -1,0 +1,32 @@
+---
+title: Serialise workflow
+weight: 10
+last_reviewed_on: 2021-11-30
+review_in: 1 year
+hide_in_navigation: true
+link_in_toc: true
+summary: Preventing concurancy
+---
+
+If a workflow is triggered twice, for example with 2 successive merges, it will run twice and possibly both at the same time. This may be an issue, for example `terraform apply` may cause unexpected problems.
+
+One way to solve this is to introduce a “turnstyle” job which runs before any other job in the workflow. It creates a lock on the running workflow and the next workflow will wait for the running workflow to finish.
+
+```
+jobs:
+  turnstyle:                          # Separate initial Turnstyle job
+    runs-on: ubuntu-latest
+    timeout-minutes: 20               # Fails workflow after waiting this time
+    steps:
+    - uses: softprops/turnstyle@v1    # Turnstyle github action
+      name: Check workflow concurrency
+      with:
+        poll-interval-seconds: 20     # Default is 60. Reduce to trigger faster
+        same-branch-only: true        # Do not conflict with same workflow
+                                      # on different branch
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  deploy:
+    needs: turnstyle                  # Force dependency in next job
+```
+

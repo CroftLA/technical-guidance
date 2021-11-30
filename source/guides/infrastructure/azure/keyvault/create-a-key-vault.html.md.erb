@@ -1,0 +1,35 @@
+---
+title: Create a Key Vault
+weight: 10
+last_reviewed_on: 2021-11-30
+review_in: 1 year
+hide_in_navigation: true
+layout: navigation
+summary:  The policy is to use Azure key vault to store secrets 
+---
+
+You will need to create a Key Vault and there are some settings you must follow:
+
+## Resource Group
+Follow the standard naming convention. You will have a Resource Group named something like s146d01-rg where s146 is the project id, and d01 is the development subscription. Your Key Vault should be named s146d01-kv and reside in the s146d01-rg resource group.
+
+## Developer Access
+You should grant access in the Access Policies section to yourself and other members of the team who you will allow to access the vault. Remember to grant minimum permissions, if they don’t need to edit then don’t grant them write.
+
+## Service Principle
+You should have a Service Principal with a name like s146d01-keyvault-readonlyaccess, this Service Principal  should be given read access. 
+
+## Create SP
+You will need to raise a Service request asking the CIP team to create a Service Principal with the ‘Key Vault Reader’ role. ( remember you will need 3 in in the end )
+You will need to have access to these Service Principals so also request that CIP save the credentials in the Key vault.  
+
+## Sample Request:
+Please create a Service Principal  s146d01-keyvault-readonly-access in the s146-getintoteachingwebsite-development subscription.
+
+Please assign the newly created Service Principal “Key Vault Reader” access to the key vault “S146d01-kv” with 1 year  expiration and store the credentials in a secret named “SP-Readonly-Credentials”
+
+## Key Vault
+You will need to create a key vault, which you will need to grant access to developers and the service principal. You will also need to grant access to yourself via the Access Policies page in the Azure Portal or via the AZ Cli.
+We suggest you grant the minimum permissions required for a person to carry out their role
+
+![Create a key vault](image1.png "Create a key vault") 

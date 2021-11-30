@@ -1,0 +1,111 @@
+---
+title: Configuring Rails Logger for GOV.UK PaaS
+weight: 10
+last_reviewed_on: 2021-11-30
+review_in: 1 year
+hide_in_navigation: true
+hide_in_toc: true
+link_in_toc: false
+summary: 
+---
+
+#  <%= current_page.data.title %>
+
+When running applications in <%= uk_gov_paas %>, it is recommended to log to STDOUT and use the syslog integration service with [logit.io](http://logit.io/).
+The following configuration requires installing the [semantic logger](https://logger.rocketjob.io/) gem to your application.
+
+##### config/initializers/semantic_logger.rb
+
+```
+Rails.application.configure do
+  config.semantic_logger.application = "" # This is added by logstash from the paas tags
+  config.log_tags = [:request_id] # Prepend all log lines with the following tags.
+end
+
+SemanticLogger.add_appender(io: STDOUT, level: Rails.application.config.log_level, formatter: Rails.application.config.log_format)
+Rails.application.config.logger.info('Application logging to STDOUT')
+```
+
+##### config/environments/production.rb
+
+```
+  # Logging
+  config.log_level = :info # Or :warn, or :error
+  config.log_format = :json # For parsing in Logit
+  config.rails_semantic_logger.add_file_appender = false # Don't log to file
+  config.active_record.logger = nil # Don't log SQL
+```
+
+#### config/environments/development.rb
+
+```
+  # Logging
+  config.log_level = :debug # Or :info
+  config.log_format = :color # Console colorised output
+  config.semantic_logger.backtrace_level = :debug # Show file and line number (expensive: not for production)
+```
+
+You can override the above configuration for each environments but it is important to set the log format too ```:json``` because the logstash filters expect the application logs to be in json format.
+
+**Important**: Please uninstall the logstash gem and related code configuration as we won’t be sending the logs directly from the application process.
+
+### Configuring logstash filters in [logit.io](http://logit.io/)
+
+Login to your logit.io dashboard and go to **Logstash Pipelines** from the settings menu of your application stack.
+
+Add the filters in [bat-platform-building-blocks](https://github.com/DFE-Digital/bat-platform-building-blocks/blob/master/logstash-filters/govuk-paas.rb) after a logical end to any of the pre-existing filters, but make sure to remove any existing filters with the condition ```type == syslog```.
+
+### Exclude logs without a logit API key
+Generate an API key for your log stack from [logit.io](http://logit.io/) dashboard and add a custom formatter in your application code to include this API key with each log message.
+
+Add the below code in ```config/initializers/semantic_logger.rb```, this configures semantic logger to add the ```logit_api_key``` field to each log message.
+
+```
+class CustomLogFormatter < SemanticLogger::Formatters::Json
+  # Returns log messages in JSON format
+  def call(log, logger)
+    super(log, logger)
+    format_add_logit_api_key
+    hash.to_json
+  end
+
+  def format_add_logit_api_key
+    hash[:logit_api_key] = ENV['LOGIT_API_KEY']
+  end
+end
+
+Rails.application.config.semantic_logger.application = Settings.application_name
+Rails.application.config.rails_semantic_logger.format = :json
+SemanticLogger.add_appender(io: STDOUT, level: Rails.application.config.log_level, formatter: CustomLogFormatter.new)
+Rails.application.config.logger.info('Application logging to STDOUT')
+```
+
+Replace the application logstash filter block (line 67 in the above template filter) with the below config:
+
+```
+    # Application logs
+    if [syslog_proc] =~ "APP" {
+        json {
+            source => "syslog_msg"
+            add_tag => ["app"]
+        }
+        if [logit_api_key] != "<REPLACE_WITH_YOUR_LOGIT_API_KEY>"
+		{
+  			drop {}
+		}
+    }
+```
+
+### Configure a syslog drain service
+We use the cf terraform provider to create and manage resources in PaaS.
+Declare a user_provided_service resource and configure the ```syslog_drain_url``` to your [logit.io](http://logit.io/) endpoint.
+
+```
+resource cloudfoundry_user_provided_service log-service {
+  name = "my-app-log-service"
+  space = data.cloudfoundry_space.id
+  syslog_drain_url = "syslog-tls://${var.logit_host}:22131"
+}
+```
+
+Get the value for your logstash host and port from Logstash Inputs under the settings menu for your logit stack.

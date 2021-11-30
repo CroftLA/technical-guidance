@@ -1,0 +1,43 @@
+---
+title: Status Page
+weight: 110
+last_reviewed_on: 2021-11-30
+review_in: 1 year
+hide_in_navigation: true
+link_in_toc: true
+summary: Teacher Services status page
+---
+
+#  <%= current_page.data.title %>
+
+The [Teacher services status page](https://teacher-services-status.education.gov.uk/) shows a basic status for each of the digital services in the extended Teacher services, including GiT and CPD. It shows the status and a history of response time for each site.
+
+When a site is down, it automatically created an incident as a Github issue, allowing to comment and track the issue. It is automaically closed when the site is up again.
+
+## Implementation
+It is based on the free [Upptime](https://upptime.js.org/) repository and uses only Github.
+
+A set of Github actions runs at regular intervals to update status, graphs, Github pages, and the code itself. Each job can be run [manually](https://github.com/DFE-Digital/teacher-services-upptime/actions/workflows/uptime.yml).
+
+The status is scheduled at 5 min interval, but this is variable and can sometimes be 15-30min. See [Uptime CI runs](https://github.com/DFE-Digital/teacher-services-upptime/actions/workflows/uptime.yml).
+
+The DNS domain [teacher-services-status.education.gov.uk](https://teacher-services-status.education.gov.uk/) was configured by Operations as a CNAME to ```http://dfe-digital.github.io.``` See [documentation](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site).
+
+## Configuration
+The configuration for our websites is done in .[upptimerc.yml](https://github.com/DFE-Digital/teacher-services-upptime/blob/master/.upptimerc.yml). It is updated via pull request to the repository.
+
+## Security
+The Github actions require a [Personal Access Token](https://docs.github.com/en/github/authenticating-to-github/keeping-your-account-and-data-secure/creating-a-personal-access-token) with write permissions to the [repository](https://github.com/DFE-Digital/teacher-services-upptime/). The token is stored in Github secret GH_PAT.
+
+In order to reduce the security risk to this repository only, the token is relative to service account teacher-services-upptime. It is a specific Github user which has write access to this repository only.
+
+The service account linked email is [teacher-services-upptime@digital.education.gov.uk](teacher-services-upptime@digital.education.gov.uk). It is a Google group whose owners are the TS infra engineers.
+
+The service account is part of our Github org and must have 2FA enabled. It is currently configured with Colin’s device.
+
+## Secrets
+The following secrets are stored in Azure keyvault ```s121p01-shared-kv``` (protected by PIM):
+
+* Github user password
+* Github user 2FA recovery codes
+* Github user token

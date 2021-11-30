@@ -1,0 +1,77 @@
+---
+title: Create Key Files (az cli) 
+weight: 10
+last_reviewed_on: 2021-11-30
+review_in: 1 year
+hide_in_navigation: true
+layout: navigation
+summary: Storing Key Vault Secrets 
+---
+
+ 
+We will not discuss how you will get your secrets but you will need to create a JSON file with the secrets you need to store:
+
+```
+{
+"HTTPAUTH_PASSWORD": "userneeds",
+"HTTPAUTH_USERNAME": "some-secret",
+"RAILS_ENV": "rolling",
+"RAILS_MASTER_KEY": "b6230XXXXXXXXXXXXXXXXXXXXXXXX110
+}
+```
+
+### Check Key Vault
+Login to Azure (az login) and ensure you can see you Key Vault (az keyvault list), assuming your Key Vault is sXXX01-kv ( which it most likely isn’t ). If it does not exist you may need to create it, I suggest using the portal to do this.
+
+### Select Subscription
+You may belong to multiple subscriptions ( Development, Test or Production ) and you will need to ensure you are on the correct subscription before proceeding.
+
+```
+az account list --output table
+
+Name                                                  CloudName    SubscriptionId        State    IsDefault
+----------------------------------------------------  -----------  --------------------- -------  -----------
+sXXX-dfeprojectname-production                        AzureCloud   5a7e562e-xxxx-xxxx--  Enabled  False
+sXXX-dfeprojectname-test                              AzureCloud   dfe71c5e-yyyy-yyyy--  Enabled  False
+sXXX-dfeprojectname-development                       AzureCloud   5b4fce3c-zzzz-zzzz--  Enabled  True
+
+
+az account set --subscription  sXXX-dfeprojectname-development
+
+az KeyVault list --output table
+
+Location    Name        ResourceGroup
+----------  ----------  ---------------
+westeurope  sXXXd01-kv  sXXXd01-rg
+```
+
+### List your Secrets
+```
+az keyvault secret list --vault-name sXXXd01-kv --output table
+```
+If your secret does not exist, then you can use the Azure CLI or Portal to create it.  in this example we are assuming the secret is the TTA-KEYS, but that can be any logical name you like.
+
+### Read the secrets
+```
+az keyvault secret show  --vault-name sXXXd01-kv --name TTA-KEYS
+```
+Downloading secret files is pretty simple too
+
+```
+az keyvault secret download  --vault-name sXXXd01-kv --name TTA-KEYS --file local_file
+```
+
+### Write Secrets
+Uploading a file is much the same as downloading one
+
+```
+az keyvault secret set  --vault-name sXXXd01-kv --name TTA-KEYS --file local_file
+```
+
+If you want to set a distinct secret:
+
+```
+az keyvault secret set  --vault-name sXXXd01-kv --name TTA --value “Banana”
+```
+
+At this point you should have successfully populated your secret in Azure and you should read it just to confirm

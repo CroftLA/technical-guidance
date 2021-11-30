@@ -1,0 +1,107 @@
+---
+title: Passing variables
+weight: 10
+last_reviewed_on: 2021-11-30
+review_in: 1 year
+hide_in_navigation: true
+link_in_toc: true
+summary: Passing a variables between jobs
+---
+
+#  <%= current_page.data.title %>
+
+Often in Github actions you will break down the pipeline into a number of jobs, which can be dependant on one another.  There maybe a need to pass information from the initial job into subsequent jobs.
+
+Github normally attempts to obfuscate sensitive variables, be careful which variables you output as it is possible to display them to anyone who has access to the repositories action page.
+
+## Job 1
+In the initial job you will need to define your outputs. To do this we need to set some variables at the start of the job:
+
+```
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      trial: ${{ steps.get_data.outputs.test }}
+```
+Here we see the output variable trial being mapped to the get_data step, which is where the output will be created.  The example below shows us that the step with the id trial, will be setting a variable called test with the contents “hello”.
+
+Note the use of echo ::set-output
+
+```
+steps:
+    - name: Populate
+      id: get_data
+      run: echo "::set-output name=test::hello"
+```
+
+## Job2
+Now we can use this output in subsequent jobs using the needs context.  This can be displayed with:
+
+
+```
+   - name: Dump context
+      env:
+        NEEDS_CONTEXT: ${{ toJson(needs) }}
+      run: echo "$NEEDS_CONTEXT"
+```
+which shows us our data is stored:
+
+
+```
+{
+  "build": {
+    "result": "success",
+    "outputs": {
+      "trial": "hello"
+    }
+  }
+}
+```
+
+so to access it you it is simply needs.build.outputs.trial as shown below:
+
+
+```
+steps:
+    - name: Read
+      run: echo ${{needs.build.outputs.trial}}
+```
+
+## Complete Code
+
+```
+name: Test
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      trial: ${{ steps.get_data.outputs.test }}
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Populate
+      id: get_data
+      run: echo "::set-output name=test::hello"
+
+  test:
+    runs-on: ubuntu-latest
+    needs:  build
+    steps:
+
+    - name: Read
+      run: echo ${{needs.build.outputs.get_data}}
+
+    - name: Dump context
+      env:
+        NEEDS_CONTEXT: ${{ toJson(needs) }}
+      run: echo "$NEEDS_CONTEXT"
+```

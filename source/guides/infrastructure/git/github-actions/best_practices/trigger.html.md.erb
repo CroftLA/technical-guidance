@@ -1,0 +1,64 @@
+---
+title: Trigger workflow 
+weight: 10
+last_reviewed_on: 2021-11-30
+review_in: 1 year
+hide_in_navigation: true
+link_in_toc: true
+summary: Triggering a workflow from another workflow
+---
+
+## Trigger workflow from another workflow
+The downstream workflow to be triggered should be configured with workflow_dispatch. The upstream triggering workflow can then trigger it via curl or via a preconfigured Github action.
+
+This may be required for several use cases:
+
+* Conditionally run a workflow. For example if a part of a workflow runs for all the branches and another part just for master.
+* Reuse workflow. If a set of steps is repeated across different workflows, it may be worth moving them to a reusable workflow which can be triggered from different workflows.
+* Template workflow. When a workflow is triggered via dispatch, a map of arbitrary parameters can be passed. The triggered workflow may use these parameters to change its behaviour.
+
+Example to run a Smoke Test against a Pull Request branch
+
+
+```
+- name: Run Smoke Test
+  uses: benc-uk/workflow-dispatch@v1
+  with:
+    workflow: Smoke Test Manual # Workflow name
+    token: ${{ secrets.PERSONAL_TOKEN }}
+    inputs: '{ "environment": "staging" }'
+    ref: ${{ github.event.pull_request.head.ref }}
+
+# This step will retry until required check passes
+# and will fail the whole workflow if the check conclusion is not a success
+- name: Wait on Smoke Test result
+  uses: lewagon/wait-on-check-action@v0.1
+  with:
+    ref: "refs/heads/${{ github.event.pull_request.head.ref }}" # can be commit SHA or tag too.
+    check-name: Smoke Test Manual Job # Job name within workflow
+    repo-token: ${{ secrets.PERSONAL_TOKEN }}
+    wait-interval: 120 # seconds
+```
+
+## Environment variables
+Variables can be declared at the workflow level, or job and step level. Avoid declaring secrets at a global level if it can be done at more local level.
+
+Environment variables are available as:
+
+* workflow variable: ${{ env.MY_VAR }}
+* shell variable inside run: run: echo ”$MY_VAR”
+
+Use the second form in run when possible but be careful as the variable won’t be expanded.
+
+
+```
+env:
+  TEST_DIR: $HOME/app/tests         # Contains a variable which should be expanded
+...
+    steps:
+    - name: Check test directory
+      run: |
+        echo "$TEST_DIR"            # $HOME is not expanded
+        echo "${{ env.TEST_DIR }}"  # $HOME is expanded
+
+```

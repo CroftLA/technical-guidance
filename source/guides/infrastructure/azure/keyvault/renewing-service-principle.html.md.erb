@@ -1,0 +1,41 @@
+---
+title: Renewing Service Principle Key
+weight: 10
+last_reviewed_on: 2021-11-30
+review_in: 1 year
+hide_in_navigation: true
+summary: The service principle key will expire after a year, these are instructions on how to renew it  
+---
+
+#  <%= current_page.data.title %>
+
+The Azure Service Principle used by GitHub actions to access the Key Vault in Azure will normally be set to expire each year.
+
+The DFE Cloud Infrastructure team will alert you to the prospect of these secrets changing. but will not update the credentials in Github actions. If GitHub actions are not update then there is a prospect of the CI/CD pipelines failing.
+
+## Change the Secret
+At least a month before the secret is due to expire it is important that you create new credentials in Azure, This can be carried as per the document [App Registrations](https://docs.microsoft.com/en-us/azure/storage/common/storage-auth-aad-app?tabs=dotnet#create-a-client-secret), but before you start it is highly recommended that you open the relevant Key Vault and create a new version of the **SP-Readonly-Credentials**, leaving the screen open and ready to accept the new secret.
+
+## Create the secret
+This can be carried as per the document [App Registrations](https://docs.microsoft.com/en-us/azure/storage/common/storage-auth-aad-app?tabs=dotnet#create-a-client-secret).
+
+* The description should be meaningful i.e KV Read Only (2022)
+
+* The secret should be set to expire in 12 months.
+
+**_This is the only time you will see the key, so take this opportunity to COPY and PASTE it into the Key Vault now._**
+
+## Store in Key Vault
+Once you have the secret it needs to be immediately stored in the relevant Azure Key Vault with the secret name of SP-Readonly-Credentials.
+
+For example the Get Into Teaching Development project uses the Service Principle [sXXXd01-keyvault-readonlyaccess](https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps/ApplicationMenuBlade/Credentials/appId/4bf0b603-073c-47fd-992c-2b03c21fcdab/isMSAApp/) the secret credentials need to be stored in the Key Vault [SXXXd01-kv](https://portal.azure.com/#@platform.education.gov.uk/resource/subscriptions/5b4fce3c-8452-43c1-be24-75d8fa96f1d0/resourceGroups/sXXXd01-rg/providers/Microsoft.KeyVault/vaults/sXXXd01-kv/secrets)
+
+## Table of Service Principles
+| Service Principle | Key Vault |Environment|
+|-------------------|-----------|-----------|
+|sXXXd01-keyvault-readonlyaccess |sXXXd01-kv|Development|
+|sXXXt01-keyvault-readonlyaccess |sXXXt01-kv|Testing|
+|sXXXp01-keyvault-readonlyaccess |sXXXp01-kv|Production|
+
+##GitHub
+Once you have your secrets recreated they need to be changed in GitHub, this is documented in the Retrieving Secrets in GitHub Actions page

@@ -1,0 +1,39 @@
+---
+title: Service Principle for Key Vault
+weight: 10
+last_reviewed_on: 2021-11-30
+review_in: 1 year
+hide_in_navigation: true
+layout: navigation
+summary: Instructions on how to create a Service Now request for a new KeyVault Service Principle 
+---
+
+## Reference Documentation
+
+* [Using RBAC and PIM to Administer Access to Certificates, Keys and Secrets Instead of Access Policies](https://docs.platform.education.gov.uk/docs/blogs/platform-engineering/key-vault-rbac.html)
+* [Storing automation secrets in Key vault](https://docs.google.com/document/d/1LdV62LhE9V6Li0hG5FwzILZF9UTY-09DmHFP4nEF8W4/edit#) - Connect to preview
+
+## Suggested Request
+In the sXXX-PROJECTNAME-development subscription the following items are needed:
+
+* A new role with the name "sXXX-PROJECTNAME-development-Contributor and key vault editor" with the following roles;
+    * Contributor 
+    * Key Vaults Certificates Officer 
+    * Key Vault Crypto Officer 
+    * Key Vaults Secrets Officer
+
+* Configure PIM for the "sXXX-PROJECT-Delivery Team USR" group to access this role
+* Change sXXXd01-kv keyvault Permission model to "Azure role-based access control"
+* Create a Service Principal sXXXd01-keyvault-readonly-access
+* Create access keys with 1 year expiration and store the credentials in a secret named "SP-Readonly-Credentials" in key vault sXXXd01-kv
+* Give Key Vault Reader and Key Vault Secrets User roles to the service principal at the subscription level
+
+## Suggested Key Vault Configuration
+Create key vault sXXXd01-kv in the sXXX-PROJECTNAME-development subscription and choose:
+
+* sXXXd01-dev-vault-resource-group.
+* Region West Europe
+* Standard pricing tier.
+* Create with ‘Vault access Policy' if the role isn’t already available.
+* Leave Networking defaults, ( public endpoint)
+* Tag as required

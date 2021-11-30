@@ -1,0 +1,80 @@
+---
+title: Statuscake
+weight: 10
+last_reviewed_on: 2021-11-30
+review_in: 1 year
+hide_in_navigation: true
+link_in_toc: true
+summary: Website uptime monitoring
+---
+
+#  <%= current_page.data.title %>
+
+Statuscake is a cloud based tool used to constantly monitor the availability of websites and alert when they are not present. 
+
+## Access
+Statuscake can be accessed by creating an account at [https://www.statuscake.com](https://www.statuscake.com/) using your @digital.education.gov.uk email address. 
+
+This will not give you access to the projects, for that you will need to contact <%= digital_tools_support %> and request access to the **DFESTATUSCAKE** subaccount.
+
+## Delivery
+Although manual configuration of a 'Uptime Monitoring Test' is possible we recomend that delivery is via terraform and uses the following sample:
+
+```
+provider "statuscake" {
+  username = local.infrastructure_secrets.SC-USERNAME
+  apikey   = local.infrastructure_secrets.SC-PASSWORD
+}
+
+alerts = {
+  GiT_App_Production_Healthcheck = {
+    website_name  = "Get Into Teaching Website (Production)"
+    website_url   = "https://getintoteaching.education.gov.uk/healthcheck.json"
+    test_type     = "HTTP"
+    check_rate    = 60
+    contact_group = [185037]
+    trigger_rate  = 0
+    confirmations = 1
+    custom_header = "{\"Content-Type\": \"application/x-www-form-urlencoded\"}"
+    status_codes  = "204, 205, 206, 303, 400, 401, 403, 404, 405, 406, 408, 410, 413, 444, 429, 494, 495, 496, 499, 500, 501, 502, 503, 504, 505, 506, 507, 508, 509, 510, 511, 521, 522, 523, 524, 520, 598, 599"
+
+  }
+}
+
+terraform {
+  required_version = ">= 0.13.4"
+
+  required_providers {
+    statuscake = {
+      source  = "StatusCakeDev/statuscake"
+      version = "1.0.1"
+    }
+  }
+  
+  resource "statuscake_test" "alert" {
+  for_each = var.alerts
+
+  website_name  = each.value.website_name
+  website_url   = each.value.website_url
+  test_type     = each.value.test_type
+  check_rate    = each.value.check_rate
+  contact_group = each.value.contact_group
+  trigger_rate  = each.value.trigger_rate
+  confirmations = each.value.confirmations
+  custom_header = each.value.custom_header
+  status_codes  = each.value.status_codes
+  basic_user    = local.infrastructure_secrets.HTTP-USERNAME
+  basic_pass    = local.infrastructure_secrets.HTTP-PASSWORD
+  test_tags     = ["GIT", "BETA"]
+}
+```
+
+### Contact Group
+Disapointingly the statuscake terraform provider does not supply a method to create contact groups, this will need to be manually created in the statuscake GUI and the CUID is required.
+
+#### Alerts
+It is possible to have a number of emails and mobile numbers for alerts when a site is unavailble.
+
+#### Integration 
+It is possible for a SLACK message to be raised, but you will need a SLACK Webhook, which can be provided on request by <%= digital_tools_support %>
+
