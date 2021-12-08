@@ -5,4 +5,94 @@ weight:
 
 # <%= current_page.data.title %>
 
-See sidebar to navigate guides.
+<%= partial('partials/page_toc') %>
+
+Azure key vault offers a secure and convenient way to store secrets
+
+## Key vault
+Create a resource group following the standard naming convention like `s146d01-rg` where `s146` is the project id
+- and `d` is the development subscription and `01` is an identifier. This can be automated using [Powershell](https://github.com/DFE-Digital/qualified-teachers-api/blob/main/azure/Set-ResourceGroup.ps1)
+and [ARM template](https://github.com/DFE-Digital/qualified-teachers-api/blob/main/azure/azuredeploy.json).
+
+The resource group must have the mandatory tags associated with your subscription.
+
+Create a key vault in this resource group and name it for example `s146d01-shared-kv`in region *West Europe* with *Standard pricing tier*.
+Leave Networking defaults (public endpoint).
+
+Repeat for each subscription (development, test, production).
+
+## Developer Access
+You could grant access in the Access Policies section to yourself and other members of the team who you will allow to access the vault. Remember to grant minimum permissions, if they don’t need to edit then don’t grant them write.
+
+**A better solution** is to use a specific user role, which can be elevated via PIM to give access to secrets. This pattern is detailed on the [CIP documentation](https://docs.platform.education.gov.uk/docs/blogs/platform-engineering/key-vault-rbac.html)
+and the implementation is explained below.
+
+## Service Principal
+To be able to retrieve the secrets from an external system like GOV.UK PaaS, you need an Azure Service Principal, which takes the form of an app registration in Azure AD.
+
+- Create a new app registration in Azure Active Directory named like `s146d01-keyvault-readonlyaccess`
+- Add owners to the app registration. This will be users responsible for the service principal and its secrets
+- [Create access keys](https://docs.microsoft.com/en-us/azure/storage/common/storage-auth-aad-app?tabs=dotnet#create-a-client-secret) with
+**1 year expiration**. This is mandated by CIP.
+- **_This is the only time you will see the key_**, so take this opportunity to COPY and PASTE it into the Key Vault now, in a secret named `SP-Readonly-Credentials` for instance
+
+## Request roles
+You will need to raise a Service request to request roles for both the service principal and for the users to be able to manage the secrets.
+The sample request may be used for all the subscriptions or one at a time.
+
+### Sample Request
+Configure PIM access to key vault following the pattern in https://docs.platform.education.gov.uk/docs/blogs/platform-engineering/key-vault-rbac.html
+
+- Please create a new role with the name `s146-getintoteachingwebsite-Contributor and key vault editor` with the following roles:
+    - `Contributor`
+    - `Key Vaults Certificates Officer`
+    - `Key Vault Crypto Officer`
+    - `Key Vaults Secrets Officer`
+- Configure PIM for the `s146-getintoteachingwebsite-Contributor-Delivery Team` user group to access this role
+
+- Change `s146d01-shared-kv` keyvault permission model to "Azure role-based access control"
+- Change `s146t01-shared-kv` keyvault permission model to "Azure role-based access control"
+- Change `s146p01-shared-kv` keyvault permission model to "Azure role-based access control"
+
+- Please give `Key Vault Reader` and `Key Vault Secrets` roles to service principal `s146d01-keyvault-readonlyaccess` at subscription level in `s146-getintoteachingwebsite-development`.
+- Please give `Key Vault Reader` and `Key Vault Secrets` roles to service principal `s146t01-keyvault-readonlyaccess` at subscription level in `s146-getintoteachingwebsite-test`.
+- Please give `Key Vault Reader` and `Key Vault Secrets` roles to service principal `s146p01-keyvault-readonlyaccess` at subscription level in `s146-getintoteachingwebsite-production`.
+
+## Use the service principal in external systems
+You will need:
+
+- `clientId`: From App registration overview, get `Application (client) ID`
+- `clientSecret`: Access key generated above, retrieve it from keyvault secret SPReadonly
+- `subscriptionId`: Get the subscription id at the subscription level
+- `tenantId`: From App registration overview, get `Directory (tenant) ID`
+
+### Github actions
+Create a json like the one generated in this the [login action documentation](https://github.com/marketplace/actions/azure-login#configure-a-service-principal-with-a-secret).
+
+```
+{
+    "clientId": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+    "clientSecret": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+    "subscriptionId": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+    "tenantId": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+}
+```
+
+Store it as a Github secret (eg: `AZURE_CREDENTIALS`) and use it with the Azure login action or provide it to Terraform.
+
+```
+- uses: Azure/login@v1
+  with:
+    creds: ${{ secrets.AZURE_CREDENTIALS }}
+```
+
+
+### Terraform
+Use the [service principal](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/guides/service_principal_client_secret) credentials above
+to configure the [provider](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs#argument-reference).
+The [jsondecode](https://www.terraform.io/docs/language/functions/jsondecode.html) function may be used to extract the values from the Github secret json.
+
+## Access key expiration
+The Operations team will alert you to the prospect of these secrets expiring, but will not update the credentials. If GitHub actions are used for example and the Github secret is not updated, then there is a risk of the CI/CD pipelines failing.
+
+See above to recreate the access keys and make sure to update them in key vault and in the systems using them.
