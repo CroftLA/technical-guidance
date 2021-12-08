@@ -5,4 +5,52 @@ weight:
 
 # <%= current_page.data.title %>
 
-See sidebar to navigate guides.
+<%= partial('partials/page_toc') %>
+
+Installation of each product should be carried out following the distributors current guidence, depending on your workstations operating system.
+
+## Azure CLI
+The Azure Command-Line Interface (CLI) is a cross-platform command-line tool to connect to Azure and execute administrative commands on Azure resources. It allows the execution of commands through a terminal using interactive command-line prompts or a script.
+
+[How to Install the Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
+
+## Cloud Foundry CLI
+Cloud Foundry is an open source cloud computing platform. It is the platform the [UK Gov PaaS](https://www.cloud.service.gov.uk/) is delivered on.
+
+[GOV.UK PaaS Getting Started (Cloud Foundry)](https://www.cloud.service.gov.uk/)
+
+## GIT
+Git is a free and open source distributed version control system designed to handle everything from small to very large projects with speed and efficiency.
+
+[Installing Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
+
+## Terraform
+
+Terraform is an infrastructure as code (IaC) tool that allows you to build, change, and version infrastructure safely and efficiently.
+
+[Install Terraform](https://learn.hashicorp.com/tutorials/terraform/install-cli)
+
+## Ruby
+
+### Using RVM
+
+1. install homebrew, this will ask to install the xcode command line tools if you dont have it already
+Run `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"`
+2. install gpg2
+Run `brew install gpg2`
+3. import the RVM keys *do not use these keys* get them from the official website (https://rvm.io/rvm/security) as they change often
+Run `gpg --keyserver hkp://pool.sks-keyservers.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB`
+4. trust the first key
+Run `echo 409B6B1796C275462A1703113804BB82D39DC0E3:6: | gpg2 --import-ownertrust # mpapis@gmail.com`
+5. install rvm
+Run `\curl -sSL https://get.rvm.io | bash -s stable`
+6. enable rvm (replace <your-user-name>)
+Run `source /Users/<your-user-name>/.rvm/scripts/rvm`
+7. install ruby 2.7.4
+Run `rvm install ruby 2.7.4`
+8. switch your system to use ruby 2.7.4`
+Run `rvm use 2.7.4`
+9. install yarn
+Run `brew install yarn`
+10. install the bundler gem
+Run `gem install bundler:2.2.8`
