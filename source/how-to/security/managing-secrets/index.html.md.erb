@@ -7,7 +7,7 @@ weight:
 
 <%= partial('partials/page_toc') %>
 
-Azure key vault offers a secure and convenient way to store secrets
+Azure key vault offers a secure and convenient way to store secrets required for application environments and infrastructure configuration.
 
 ## Key vault
 Create a resource group following the standard naming convention like `s146d01-rg` where `s146` is the project id
@@ -41,7 +41,9 @@ You will need to raise a Service request to request roles for both the service p
 The sample request may be used for all the subscriptions or one at a time.
 
 ### Sample Request
-Configure PIM access to key vault following the pattern in https://docs.platform.education.gov.uk/docs/blogs/platform-engineering/key-vault-rbac.html
+Create a request in
+```
+Configure PIM access to key vault following the pattern in https://docs.platform.education.gov.uk/docs/blogs/platform-engineering/key-vault-rbac.html :
 
 - Please create a new role with the name `s146-getintoteachingwebsite-Contributor and key vault editor` with the following roles:
     - `Contributor`
@@ -57,6 +59,7 @@ Configure PIM access to key vault following the pattern in https://docs.platform
 - Please give `Key Vault Reader` and `Key Vault Secrets` roles to service principal `s146d01-keyvault-readonlyaccess` at subscription level in `s146-getintoteachingwebsite-development`.
 - Please give `Key Vault Reader` and `Key Vault Secrets` roles to service principal `s146t01-keyvault-readonlyaccess` at subscription level in `s146-getintoteachingwebsite-test`.
 - Please give `Key Vault Reader` and `Key Vault Secrets` roles to service principal `s146p01-keyvault-readonlyaccess` at subscription level in `s146-getintoteachingwebsite-production`.
+```
 
 ## Use the service principal in external systems
 You will need:
@@ -69,7 +72,7 @@ You will need:
 ### Github actions
 Create a json like the one generated in this the [login action documentation](https://github.com/marketplace/actions/azure-login#configure-a-service-principal-with-a-secret).
 
-```
+```json
 {
     "clientId": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
     "clientSecret": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
@@ -80,19 +83,69 @@ Create a json like the one generated in this the [login action documentation](ht
 
 Store it as a Github secret (eg: `AZURE_CREDENTIALS`) and use it with the Azure login action or provide it to Terraform.
 
-```
+```yaml
 - uses: Azure/login@v1
   with:
     creds: ${{ secrets.AZURE_CREDENTIALS }}
 ```
 
+The secrets can then be retrieved using the [Azure/get-keyvault-secrets](https://github.com/marketplace/actions/azure-key-vault-get-secrets) action.
+
 
 ### Terraform
 Use the [service principal](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/guides/service_principal_client_secret) credentials above
 to configure the [provider](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs#argument-reference).
-The [jsondecode](https://www.terraform.io/docs/language/functions/jsondecode.html) function may be used to extract the values from the Github secret json.
 
+The above json may be reused by passing it to a terraform variable then the [jsondecode](https://www.terraform.io/docs/language/functions/jsondecode.html) function can be used to extract the values.
+
+The secrets can then be retrieved using the [azurerm_key_vault data source](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/data-sources/key_vault).
 ## Access key expiration
 The Operations team will alert you to the prospect of these secrets expiring, but will not update the credentials. If GitHub actions are used for example and the Github secret is not updated, then there is a risk of the CI/CD pipelines failing.
 
 See above to recreate the access keys and make sure to update them in key vault and in the systems using them.
+
+## Store multiple values per secret
+
+The name of a secret must be hard coded in the systems retrieving it. When using infrastructure as code, this name may be present in multiple files which creates a burden to rename or add more secrets.
+
+An alternative is to store a file containing multiple secrets as key-value pairs, for example with `yaml`. The secrets can be added, removed or updated in the file without changing anything in the code.
+There are a number of ways to edit or read the secrets.
+
+### Edit using Azure cli
+Create a yaml local file and upload it:
+
+```shell
+az keyvault secret set  --vault-name sXXXd01-kv --name TTA-KEYS --file local_file.yml
+```
+_Make sure to delete the local file after use._
+
+### Read using Azure cli
+Print the file content:
+
+```shell
+az keyvault secret show  --vault-name sXXXd01-kv --name TTA-KEYS
+```
+_Make sure to clear the command line after use._
+
+Download to a local file:
+
+```shell
+az keyvault secret download  --vault-name sXXXd01-kv --name TTA-KEYS --file local_file.yml
+```
+_Make sure to delete the local file after use._
+
+### Read using Github actions
+Use the [keyvault-yaml-secret action](https://github.com/DFE-Digital/github-actions/tree/master/keyvault-yaml-secret) to retrieve a secret from the yaml file.
+
+### Read using terraform
+Use the [yamldecode](https://www.terraform.io/docs/language/functions/yamldecode.html) function to parse the yaml file and access individual values:
+
+```hcl
+infra_secrets = yamldecode(data.azurerm_key_vault_secret.infra_secrets.value)
+paas_password = infra_secrets["paas_password"]
+```
+
+### Read and write using the fetch_config.rb script
+[fetch_config.rb](https://github.com/DFE-Digital/bat-platform-building-blocks/tree/master/scripts/fetch_config) is a convenient ruby script to read and write securely to and from Azure key vault and transform into multiple formats.
+
+It is routinely used by developers. See `print-app-secrets` and `edit-app-secrets` in this [Makefile](https://github.com/DFE-Digital/publish-teacher-training/blob/master/Makefile) for example.
