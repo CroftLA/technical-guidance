@@ -5,4 +5,206 @@ weight:
 
 # <%= current_page.data.title %>
 
-See sidebar to navigate guides.
+
+This document is intended to list technical risks to our digital services and the mitigations we have in place.
+
+## Application bug
+A software or configuration defect gets deployed and it’s impacting users
+
+|||
+|-|-|
+|Impact|Loss of some functionality in a service|
+|Prevention|Code review. Implement sufficient unit tests and integration tests in production like environments.|
+|Detection|It may be reported by a failing smoke test before release ideally, by error tracking software like [Sentry](httos://sentry.io/) or in the worst-case scenario, a user contacting support after release|
+|Remediation|The quickest action is to roll back the problematic change or roll forward with a fix|
+
+## Application crash
+The application may crash because of a bug, memory leak, high utilisation…
+
+|||
+|-|-|
+|Impact|It may or may not impact end users as a service may deploy multiple application instances.|
+|Prevention|Crashes may happen because of high memory, CPU or disk usage. These metrics should be monitored and notify in advance to avoid the crash entirely.|
+|Detection|Endpoint monitoring like `StatusCake` would notify of a total outage impacting users, if the whole application crashes. An application _instance_ crash may be reported by monitoring.<br/>In the case of GOV.UK PaaS, the prometheus metric `crash` increases if an instance crashes.|
+|Remediation|The quickest action is to roll back the problematic change or roll forward with a fix. Ideally the platform detects a failing application and restarts it.<br/>For example GOV.UK PaaS detects the failure by running frequent healthchecks. Then it deploys a new container and kills the failed one.<br/>If there is no such feature, the application may be restarted manually. If the restart doesn't work, the application and infrastructure must be investigated manually.|
+
+## Data corruption
+The data in the database is corrupted because of a bug, human error, malicious activity… and cannot be recovered.
+
+|||
+|-|-|
+|Impact|Some data may be lost, updated with incorrect value or may be presented to the wrong users.|
+|Prevention|Crashes may happen because of high memory, CPU or disk usage. These metrics should be monitored and notify in advance to avoid the crash entirely.|
+|Detection|Smoke tests may detect corruptions in some critical data.|
+|Remediation|Access to the service should be stopped immediately.<br/>The data may be fixed manually if the change is simple. If the change is complex or if we don't know the extent of the issue, it may be necessary to recover the database from a backup whether daily, hourly or point-in-time using transaction logs.<br/>GOV.UK PaaS keeps backups of the database and transaction logs. We can recreate the database with daily or point-in-time (1s resolution) backup.|
+
+
+## Loss of database instance
+In case a database service is deleted from PaaS, in case of human or automation error, the whole instance is deleted, including its backups.
+
+### Impact
+Users can't read or write any data.
+
+### Detection
+Endpoint monitoring may point to a healthcheck page checking the connection to the databse. Or smoke tests running in production may detect it.
+
+### Remediation
+To protect against human errors, we only allow users in the prod space when they need to.
+To protect against automation errors, changes are reviewed in pull requests and review apps.
+We also keep a daily backup of the prod databases in Azure storage in case a disaster happens. The backups are only accessible upon PIM request.
+
+## Loss of AWS availability zone
+We deploy to PaaS London region which has 3 separate availability zone. It may happen that one of them is unavailable: either network, compute or storage services are affected.
+
+PaaS is spread across the 3 AZs and is available in case of failure. AZ failure did happen, PaaS was slower and had intermittent errors but was still usable.
+
+The applications on paas must be build with failure in mind:
+
+we deploy more than one app instance so they are spread across more than 1 AZ
+
+the prod databases use the HA (High Availability) plan. This creates a cluster across multiple zone which fails over automatically in case of failure.
+
+## Loss of AWS region
+In some rare cases, an entire region might become unavailable.
+
+We don’t protect against this risk as the risk is not worth the complexity of the required set-up.
+
+## GOV.UK PaaS unavailable
+Our services are on PaaS and any problem on PaaS may impact us.
+
+The issue may impact our operations which is not critical. It may be critical if it impacts our service. Depending on the issue there may be a remediation or not. We only deploy to the London region, whereas PaaS also offers the Ireland region.
+
+PaaS status is published on GOV.UK Platform as a Service (PaaS) Status . You can subscribe to email updates (the dfe-paas-users email list is already subscribed).
+The PaaS team can be contacted via:
+
+## Support page
+
+ (24x7)
+
+Email
+
+Cross-Government Slack in #govuk-paas channel
+
+## Azure issues
+We rely on Azure for:
+
+Terraform state in Azure storage
+
+Deploment and application secrets in Azure keyvault
+
+Daily production database backups in Azure storage
+
+This would not impact the running applications but would prevent us from deploying new versions and backing up the database.
+Key vaults have soft delete enabled so they are recoverable in case of deletion. Secrets are versioned.
+Azure storage accounts can be recovered for 14 days if they were deleted by mistake
+Container soft delete is enabled to enable recovery in case of deletion
+Versioning for blobs is enabled in the containers so the files are recoverable in case of corruption or deletion.
+
+TODO The configuration above was made manually and should be scripted
+Storage accounts Trello
+Key vaults and service principals Trello
+
+## Denial of service
+An attacker may send a high number of requests to overload the service and make it unavailable.
+
+To provide a custom domain instead of the default PaaS domain, our applications use the cdn-route service which is an AWS Cloudfront distribution. Cloudfront is configured with AWS Shield standard by default which protects against the most frequently occurring network and transport layer DDoS attacks.
+
+## Unauthorised access
+A malicious actor gains access or an ex employee still has working credentials. They connect to paas and break the app or read confidential data.
+
+We don’t have automatic detection of this kind of intrusion
+
+Databases are not directly accessible via internet, which is different than Azure where databases where accessible via internet and access was restricted by a firewall
+
+We rely on the digital-tools offboarding process to remove the paas account once an employee has left
+
+Digital tools can revoke access, delete account or reset password
+
+We rely on the space managers to control who has access to prod
+
+Only space managers can get permanent access to prod. This should be a tightly controlled group. We could force them to use Google SSO and MFA.
+
+Access is audited by PaaS and audit log can be accessed in the admin portal.
+
+[Should we add: “Non-production environments have anonymised versions of the production data to reduce availibility of sensitive data.”. Just realised it’s mentioned in the section below, but maybe it wouldn’t hurt to give it a quick mention here too. --Misha]
+
+## Disclosure of secrets
+Different kind of sensitive information may be posted online accidentally:
+
+Deployment secrets, ex: paas credentials
+
+Application secrets, ex: Google API key
+
+Application data, ex: database dump
+
+Deployment and application secrets are stored in Azure keyvault where access is restricted, or Github secrets where secrets are not readable. There should not be a need to store secrets on a developer’s computer.
+Terraform state files contain many secrets. They are stored in Azure storage and access is restricted.
+PaaS databases are not accessible via internet. We can use sqlpad or Blazer to provide secure access to users.
+Production database backups are stored in Azure storage and access is restricted.
+Databases in staging and QA have anonymised data. A daily anonymised data backup is stored as Github actions artifact and access is restricted.
+
+Misha: How about addressing accidental inclusion of secrets in the GitHub repo?
+
+Sensitive data may also be accidentally uploaded to our git repos in GitHub, which has occured in the past. We use .gitignore ensure certain know files and directories are never added to the git repo. Should some sensitive information be included, we can remove it from the git repo and it’s history, and make a request to GitHub to remove any pull-request that include it, as those can exist beyond the life of the repo.
+
+## SSL certificate expiry
+Each service must have a valid SSL certificate otherwise clients can’t connect. Certificates have an expiry date and are not valid after the date.
+
+Services on PaaS are configured with a custom domain which generates a certificate and renews it automatically.
+
+## Traffic spike
+A sudden traffic spike may overload the system, making it slow or unresponsive.
+
+We use Cloudfront which will absorb the high load for cached content.
+Application instances in PaaS are horizontally scalable and automatically load balanced. In case of slowness, we can increase the number of instances to cope with the demand.
+Databases can be scaled vertically, but it can take up to 20min.
+
+## Failure of external services
+Our services depend on a number of other services which can fail and impact our users.
+
+## DfE Sign-In
+Users can’t connect if DSI is down. Both Apply and Publish can enable a temporary workaround as required.
+
+These services do not have a workaround and would have operation down time:
+
+## Register
+
+TTAPI (Admin UI)
+
+## DockerHub
+When an application is deployed to PaaS, its docker image is pulled from DockerHub and stored in PaaS. If DockerHub is down it won’t impact the running service, but we won’t be able to deploy new versions, for example for bugfixes or reverting to older versions.
+
+## Github
+Github is our code repository and continuous integration system (Github actions). If Github is down it won’t impact the running service, but we won’t be able to deploy new versions, including bug fixes, for example for bugfixes or reverting to older versions.
+
+## Monitoring and logging
+Logit.io, StatusCake, Prometheus, skylight, sentry, Google BigQuery
+
+Failure won’t impact our running services but we will lose visibility of them.
+
+## Google API
+Integration with Google API is done largely in background tasks, however some UI elements do rely on contacting the Google API:
+
+TTAPI and Apply – geocoding is done in a background task, so provider locations may not get updated with geocoding, but the API will continue to respond. These background tasks are managed by SideKiq and will get requeued if there is an outage.
+
+Find – searched and elements of the UI rely on live requests that go to the Google API for geocoding, places and maps. A Google API outage would noticeably affect the service.
+
+## Mapit
+Some Geocoding is done via mapit.
+
+[Misha: Where do we use mapit and what are the effects?]
+
+## Teacher training API
+If the API goes down, Find and Publish will be down as well. Apply will be up but won’t be able to refresh its database of teacher training courses.
+
+GOV.UK Notify
+GOV.UK Notify is used to communicate with our users.
+
+New provider users cannot be onboarded; calls to action get swallowed
+
+## DTTP
+AKA the database of trainee teachers and providers.
+
+If the DTTP goes down, Register will still attempt to submit trainees for TRNs and award statuses. There will be no immediate visual errors for users, however errors will be reported to Sentry from background jobs.
+
+Failed jobs may time out and need to be requeued to ensure the data on DTTP is up to date.
