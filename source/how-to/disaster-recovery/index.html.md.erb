@@ -80,25 +80,19 @@ When our services are on GOV.UK PaaS, any problem with platform may impact us. S
 |Detection|Endpoint monitoring checking for uptime|
 |Remediation|Start services in backup region, trigger DNS failover|
 
+## Azure issues impacting GOV.UK PaaS
+We often rely on Azure for:
 
-## Azure issues
-We rely on Azure for:
+- Terraform state in Azure storage
+- Deploment and application secrets in Azure keyvault
+- Daily production database backups in Azure storage
 
-Terraform state in Azure storage
-
-Deploment and application secrets in Azure keyvault
-
-Daily production database backups in Azure storage
-
-This would not impact the running applications but would prevent us from deploying new versions and backing up the database.
-Key vaults have soft delete enabled so they are recoverable in case of deletion. Secrets are versioned.
-Azure storage accounts can be recovered for 14 days if they were deleted by mistake
-Container soft delete is enabled to enable recovery in case of deletion
-Versioning for blobs is enabled in the containers so the files are recoverable in case of corruption or deletion.
-
-TODO The configuration above was made manually and should be scripted
-Storage accounts Trello
-Key vaults and service principals Trello
+|||
+|-|-|
+|Impact|This would not impact the running applications but would prevent us from deploying new versions and backing up the database.|
+|Prevention|Enable soft delete on Key vaults. Secrets are versioned.<br/>Enable container soft delete<br/>Enable versioning for blobs|
+|Detection|The pipelines or deployments may fail|
+|Remediation|Key vaults with soft delete are recoverable. Secrets are versioned and recoverable in case of corruption or deletion<br/>Azure storage accounts can be recovered for 14 days if they were deleted by mistake<br/>Storage container with soft delete are recoverable<br/>Versioned files in storage blobs are recoverable in case of corruption or deletion|
 
 ## Denial of service
 An attacker may send a high number of requests to overload the service and make it unavailable.
