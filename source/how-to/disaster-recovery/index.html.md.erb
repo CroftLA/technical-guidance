@@ -5,6 +5,7 @@ weight:
 
 # <%= current_page.data.title %>
 
+<%= partial('partials/page_toc') %>
 
 This document is intended to list technical risks to our digital services and the mitigations we have in place.
 
@@ -65,25 +66,20 @@ In some rare cases, an entire region might become unavailable.
 |||
 |-|-|
 |Impact|Applications may be unavailable|
-|Prevention|For critical applications, it is possible to deploy to 2 different regions, synchronise the data configure a DNS based failover or GSLB. We don’t usually protect against this risk as it is not worth the complexity of the required set-up.|
+|Prevention|For critical applications, it is possible to deploy to 2 different regions, synchronise the data, configure a DNS based failover or GSLB. We don’t usually protect against this risk as it is not worth the complexity of the required set-up.|
 |Detection|Endpoint monitoring checking for uptime|
 |Remediation|Start services in backup region, trigger DNS failover|
 
 ## GOV.UK PaaS unavailable
-Our services are on PaaS and any problem on PaaS may impact us.
+When our services are on GOV.UK PaaS, any problem with platform may impact us. See [GOV.UK PaaS Support](/guides/govuk-paas/getting-started/#support).
 
-The issue may impact our operations which is not critical. It may be critical if it impacts our service. Depending on the issue there may be a remediation or not. We only deploy to the London region, whereas PaaS also offers the Ireland region.
+|||
+|-|-|
+|Impact|Services may be slow or unavailable. Or the service may be available but operations and deployments are broken.|
+|Prevention|For critical applications, it is possible to deploy to 2 different regions (London and Ireland), synchronise the data, configure a DNS based failover or GSLB. We don’t usually protect against this risk as it is not worth the complexity of the required set-up.|
+|Detection|Endpoint monitoring checking for uptime|
+|Remediation|Start services in backup region, trigger DNS failover|
 
-PaaS status is published on GOV.UK Platform as a Service (PaaS) Status . You can subscribe to email updates (the dfe-paas-users email list is already subscribed).
-The PaaS team can be contacted via:
-
-## Support page
-
- (24x7)
-
-Email
-
-Cross-Government Slack in #govuk-paas channel
 
 ## Azure issues
 We rely on Azure for:
