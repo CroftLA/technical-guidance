@@ -9,7 +9,7 @@ window.onload = function toc() {
         var a = document.createElement('a');
         var a_text = document.createTextNode(h.innerText);
         a.append(a_text);
-        a.setAttribute('href', `#${h.id}`);
+        a.setAttribute('href', '#'+h.id);
         var li = document.createElement('li');
         li.append(a);
         ul.append(li);
