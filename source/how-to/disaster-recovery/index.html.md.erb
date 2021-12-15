@@ -130,9 +130,14 @@ Different kind of sensitive information may be posted online accidentally by a d
 |Remediation|Remove the secrets from the public place, rotate all the exposed secrets, investigate if they were used.<br/>In the case of Github, remove from the repository and its history, make a request to GitHub to remove any pull-request or branch that include it, as those can exist beyond the life of the repo.|
 
 ## SSL certificate expiry
-Each service must have a valid SSL certificate otherwise clients can’t connect. Certificates have an expiry date and are not valid after the date.
+Each service must have a valid SSL certificate otherwise clients cannot connect. Certificates have an expiry date and are not valid after the date.
 
-Services on PaaS are configured with a custom domain which generates a certificate and renews it automatically.
+|||
+|-|-|
+|Impact|Users can't access the website. Or they may ignore browser warnings and could then be tricked into a malicious website.|
+|Prevention|Set up auto renewal of certificates stored in [Azure key vault](https://docs.microsoft.com/en-us/azure/key-vault/certificates/tutorial-rotate-certificates). Services on PaaS are configured with a custom domain which generates a certificate and renews it automatically. If not auto renewed, set up monitoring of expiry date. Certficates created on DfE's Globalsign are monitored by Operations and owners receive notifications.|
+|Detection|Email from Operations or notification from monitoring|
+|Remediation|If not auto renewed, issue a new Globalsign certificate and install it on the website|
 
 ## Traffic spike
 A sudden traffic spike may overload the system, making it slow or unresponsive.
