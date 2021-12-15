@@ -1,6 +1,6 @@
 {
   "infrastructure_support": "guides/infrastructure/#infrastructure" ,
   "digital_tools_support":  "guides/infrastructure/#digital-tools-support-team",
-  "uk_gov_paas":            "https://docs.cloud.service.gov.uk/"
+  "uk_gov_paas":            "https://docs.cloud.service.gov.uk/",
   "service_now_url":        "https://dfe.service-now.com/"
 }

@@ -1,8 +1,56 @@
 ---
 title: Monitoring
-weight:
+weight: 70
 ---
 
-# <%= current_page.data.title %>
+#  <%= current_page.data.title %>
 
-See sidebar to navigate guides.
+<%= partial('partials/page_toc') %>
+
+## Azure
+ 
+### Azure Monitoring
+ 
+### Azure Analysis
+
+## Logit
+The Logit platform delivers  a fully customised log and metrics solution based on Elasticsearch, Logstash and Kibana which is scalable, secure and compliant. It is the recommended method of cloud hosted logging when using the <%= uk_gov_paas %> .
+
+### Access
+Logit can be accessed by creating an account at [https://logit.io/](https://logit.io/) using your @digital.education.gov.uk email address.
+
+This will not give you access to the project stacks, for that you will need to contact <%= digital_tools_support %> and request access to TWD stacks.
+
+* Becoming a Teacher - PAAS
+* Get Into Teaching
+
+### New Stack
+To create a new a new stack you need to raise a request with <%= digital_tools_support %>, providing them with the directorate ( Teaching Workforce Directory: TWD ) and project name. You will need to know the approximate amount of data and retention period. (This can be gathered from [Logit.io](http://logit.io/) )
+
+The digital tools support team will liaise with finance. This process can take a couple of working days.
+
+### Log Structure
+All teams should send the logs using a similar structure so the queries, graphs and dashboards can be reused across different products.
+
+This assumes a typical Rails application as it’s the vast majority in Teacher services.
+
+* Use [Logit.io](http://logit.io/) to store and query logs
+* When using <%= uk_gov_paas %>:
+        * Send logs to STDOUT
+        * <%= link_to "Configuring Rails logger for GOV.UK PaaS", "logit/rails_logger.html" %>
+* When using Azure:
+        * Use logstash-logger gem to send logs to [Logit.io](http://logit.io/) (we don’t have a method to send STDOUT logs to logit in Azure, so have to rely on logstasher running in the docker container)
+* Use [rails semantic logger](https://logger.rocketjob.io/) to make logs pretty
+
+
+### Slack Alerts
+
+* <%= link_to "Configuring Logit with Slack alerts", "logit/slack.html" %>
+
+## Prometheus / Grafana / Alertmanager
+
+## Sentry
+
+## StatusCake
+
+## StatusPage
