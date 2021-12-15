@@ -97,45 +97,37 @@ We often rely on Azure for:
 ## Denial of service
 An attacker may send a high number of requests to overload the service and make it unavailable.
 
-To provide a custom domain instead of the default PaaS domain, our applications use the cdn-route service which is an AWS Cloudfront distribution. Cloudfront is configured with AWS Shield standard by default which protects against the most frequently occurring network and transport layer DDoS attacks.
+|||
+|-|-|
+|Impact|The service is unavailable or slow for users|
+|Prevention|Every property in Azure is protected by [Azure's infrastructure DDoS (Basic) Protection](https://docs.microsoft.com/en-us/azure/ddos-protection/ddos-protection-overview).<br/>All apps on GOV.UK PaaS using a [custom domain](https://docs.cloud.service.gov.uk/deploying_services/use_a_custom_domain/) are protected by [AWS Shield Standard](https://aws.amazon.com/shield/features/)<br/>Depending on the criticality of the service, it is possible to use Azure DDoS Protection Standard instead.|
+|Detection|Endpoint monitoring checking for uptime and response time|
+|Remediation|Protection measures are triggered automatically. It is also possible to analyse the traffic pattern and change the application accordingly.|
 
 ## Unauthorised access
-A malicious actor gains access or an ex employee still has working credentials. They connect to paas and break the app or read confidential data.
+A malicious actor steals credentials or an ex employee still has working credentials and gains privileged access to the live environment.
 
-We don’t have automatic detection of this kind of intrusion
-
-Databases are not directly accessible via internet, which is different than Azure where databases where accessible via internet and access was restricted by a firewall
-
-We rely on the digital-tools offboarding process to remove the paas account once an employee has left
-
-Digital tools can revoke access, delete account or reset password
-
-We rely on the space managers to control who has access to prod
-
-Only space managers can get permanent access to prod. This should be a tightly controlled group. We could force them to use Google SSO and MFA.
-
-Access is audited by PaaS and audit log can be accessed in the admin portal.
-
-[Should we add: “Non-production environments have anonymised versions of the production data to reduce availibility of sensitive data.”. Just realised it’s mentioned in the section below, but maybe it wouldn’t hurt to give it a quick mention here too. --Misha]
+|||
+|-|-|
+|Impact|They may break the app, read or change confidential data|
+|Prevention|Separate production environment and tighten security. Non production environments should only hold test or anonymised data.<br/>Revoke access every day or use [Azure PIM](https://docs.microsoft.com/en-us/azure/active-directory/privileged-identity-management/pim-configure) to give users temporary access. Make sure the offboarding process is followed. Use single-sign-on and 2FA when possible.<br/>Do not give databases a public IP.|
+|Detection|Azure audit logs, GOV.UK PaaS audit log|
+|Remediation|Revoke access of the suspicious user, investigate their actions<br/>Rotate secrets they may know and possibly restore the database to a known good state.|
 
 ## Disclosure of secrets
-Different kind of sensitive information may be posted online accidentally:
+Different kind of sensitive information may be posted online accidentally by a developer. On a website like [pastebin](https://pastebin.com/) or committed to Github public repository. Examples:
 
-Deployment secrets, ex: paas credentials
+- _Deployment secrets_ like GOV.UK PaaS credentials, AWS API key
+- _Application secrets_ like Google API key
+- _Application data_ like a database dump
 
-Application secrets, ex: Google API key
 
-Application data, ex: database dump
-
-Deployment and application secrets are stored in Azure keyvault where access is restricted, or Github secrets where secrets are not readable. There should not be a need to store secrets on a developer’s computer.
-Terraform state files contain many secrets. They are stored in Azure storage and access is restricted.
-PaaS databases are not accessible via internet. We can use sqlpad or Blazer to provide secure access to users.
-Production database backups are stored in Azure storage and access is restricted.
-Databases in staging and QA have anonymised data. A daily anonymised data backup is stored as Github actions artifact and access is restricted.
-
-Misha: How about addressing accidental inclusion of secrets in the GitHub repo?
-
-Sensitive data may also be accidentally uploaded to our git repos in GitHub, which has occured in the past. We use .gitignore ensure certain know files and directories are never added to the git repo. Should some sensitive information be included, we can remove it from the git repo and it’s history, and make a request to GitHub to remove any pull-request that include it, as those can exist beyond the life of the repo.
+|||
+|-|-|
+|Impact|A malicious actor may gain access to the system, break the app, read or change confidential data, deploy extra applications.|
+|Prevention|Secrets should be stored in a secure location like Azure keyvault ([see Managing secrets](/how-to/security/managing-secrets/)), Azure devops variables or Github secrets. They should not be stored in a local file. If necessary temporarily, make sure to exclude it with `.gitignore`.<br/>Use Terraform [remote state backend](https://www.terraform.io/docs/language/state/remote.html) in a secure Azure storage account and not local files.<br/>Do not expose databases on the internet and refrain from downloading production dumps. Store database backups in a secure storage account and use ony anonymised data for non production environments.<br/>Install [git-secrets](https://github.com/awslabs/git-secrets) locally. Configure [GitGuardian](https://www.gitguardian.com/) on the repository.|
+|Detection|Block by git-secrets or notification from GitGuardian. Alert on overspending.|
+|Remediation|Remove the secrets from the public place, rotate all the exposed secrets, investigate if they were used.<br/>In the case of Github, remove from the repository and its history, make a request to GitHub to remove any pull-request or branch that include it, as those can exist beyond the life of the repo.|
 
 ## SSL certificate expiry
 Each service must have a valid SSL certificate otherwise clients can’t connect. Certificates have an expiry date and are not valid after the date.
