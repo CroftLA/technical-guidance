@@ -117,6 +117,16 @@ Management of the platform is done by GDS. Management of the DfE resources is do
 * Invoice the finance team responsible for each space
 * Create DNS domains
 
+## Billing
+GDS charges for our usage and sends us an invoice every 3 months. The cost is typically the cost of AWS resources plus 10% admin fee. See [Pricing](https://www.cloud.service.gov.uk/pricing/).
+
+The bill is sent to DfE finance. It is then split between the different services depending on usage per space. Each finance team is sent the invoice for cross-charging.
+
+Costs are available [via the portal](https://admin.london.cloud.service.gov.uk/organisations/386a9502-d9b6-4aba-b3c3-ebe4fa3f963e/statements) at the organisation level and at the space level (BillingManager role required to access).
+A service should aggregate usage across all their spaces to calculate the total cost.
+
+A dashboard showing daily spending is available by default when the [cf-monitoring](https://github.com/DFE-Digital/cf-monitoring/) solution is deployed.
+
 ## Links
 * [GOV.UK PaaS home page](https://www.cloud.service.gov.uk/)
 * [GOV.UK PaaS Documentation](https://docs.cloud.service.gov.uk/)
