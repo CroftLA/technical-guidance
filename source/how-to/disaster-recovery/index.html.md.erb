@@ -140,28 +140,59 @@ Each service must have a valid SSL certificate otherwise clients cannot connect.
 |Remediation|If not auto renewed, issue a new Globalsign certificate and install it on the website|
 
 ## Traffic spike
-A sudden traffic spike may overload the system, making it slow or unresponsive.
+A sudden spike in user traffic due to an announcement, a product launch or a coincidence may overload the system.
 
-We use Cloudfront which will absorb the high load for cached content.
-Application instances in PaaS are horizontally scalable and automatically load balanced. In case of slowness, we can increase the number of instances to cope with the demand.
-Databases can be scaled vertically, but it can take up to 20min.
+|||
+|-|-|
+|Impact|The system is slow or unresponsive|
+|Prevention|Set up response time monitoring.<br/>Run load testing to determine bottlenecks and know how to scale up.<br/>Use CDN for web page caching and internal caching like Redis or Memcached. On GOV.UK PaaS, serve web assets (javascript, CSS...) without [forwarding any header](https://docs.cloud.service.gov.uk/deploying_services/use_a_custom_domain/#forwarding-headers) to optimise caching.|
+|Detection|Alert from response time monitoring, high CPU or memory usage, instances crashing|
+|Remediation|Scale applications and services horizontally and vertically<br/>Disable expensive features|
 
-## Failure of external services
-Our services depend on a number of other services which can fail and impact our users.
+## DfE Sign-In failure
+[DfE Sign-in](https://services.signin.education.gov.uk/) is a single-sign-on solutions for many website.
 
-## DfE Sign-In
-Users can’t connect if DSI is down. Both Apply and Publish can enable a temporary workaround as required.
-
-These services do not have a workaround and would have operation down time:
-
-
-## DockerHub
-When an application is deployed to PaaS, its docker image is pulled from DockerHub and stored in PaaS. If DockerHub is down it won’t impact the running service, but we won’t be able to deploy new versions, for example for bugfixes or reverting to older versions.
+|||
+|-|-|
+|Impact|Users cannot connect to the website|
+|Prevention|Implement login workaround via magic link or username/password|
+|Detection|Smoke test failure. DfE Sign-in [status page](https://status.signin.education.gov.uk/)|
+|Remediation|Activate the login workaround|
 
 ## Github
-Github is our code repository and continuous integration system (Github actions). If Github is down it won’t impact the running service, but we won’t be able to deploy new versions, including bug fixes, for example for bugfixes or reverting to older versions.
+[Github](https://github.com/) is our code repository, continuous integration system ([Github actions](https://github.com/features/actions)) and Docker registry ([GHCR](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry)).
 
-## Monitoring and logging
-Logit.io, StatusCake, Prometheus, skylight, sentry, Google BigQuery
+|||
+|-|-|
+|Impact|Users are not impacted, but we would not be able to deploy via automation|
+|Prevention|Plan to be able to deploy manually. Have DockerHub or Azure container registry ready as backup registry.|
+|Detection|Github [status page](https://www.githubstatus.com/). Updates are posted to the #govuk-paas Slack channel.<br/>Notification of pipeline failures|
+|Remediation|Build and deploy manually|
 
-Failure won’t impact our running services but we will lose visibility of them.
+## DockerHub
+[DockerHub](https://hub.docker.com/) is a docker container registry. New application version images are built, pushed to DockerHub then used for deployment.
+
+If DockerHub is down it won’t impact the running service, but we won’t be able to deploy new versions, for example for bugfixes or reverting to older versions.
+
+|||
+|-|-|
+|Impact|Users are not impacted, but we would not be able to deploy via automation|
+|Prevention|Have Github container registry or Azure container registry ready as backup registry.|
+|Detection|DockerHub [status page](https://status.docker.com/)<br/>Notification of pipeline failures|
+|Remediation|Build and deploy manually|
+
+## Monitoring and logging failure
+We rely on services like [Logit.io](https://logit.io/), [StatusCake](https://www.statuscake.com/), [Prometheus ecosystem](https://github.com/DFE-Digital/cf-monitoring/), [Skylight](https://www.skylight.io/), [Sentry](https://sentry.io/)
+
+|||
+|-|-|
+|Impact|Users are not impacted, but we would lose visibility of our systems|
+|Prevention||
+|Detection||
+|Remediation|Check manually|
+
+## Google BigQuery
+TBD
+
+## Google API
+TBD
