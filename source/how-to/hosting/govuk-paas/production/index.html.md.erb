@@ -1,0 +1,44 @@
+---
+title: Production
+weight: 30
+---
+
+# <%= current_page.data.title %>
+
+## Service accounts
+<%= partial( "partials/google_service_account" ) %>
+
+### Attach Gov.UK account to DFE Organisation
+* Using <%= service_now %>  request the creation of a new account.
+
+* Request Something
+
+* Non-standard
+
+* GOV.UK PaaS
+
+* Choose Request Type:  User Maintenance
+
+* Do you wish to Add a User, Remove a User or Assign a role to Existing User? Add User
+
+* Press the Add button and enter the details of the Google group, you created above.
+
+* Submit
+
+### Final steps
+* Once the user has been created, you will receive an email requiring that you set the password. If you do not get this mail or have not remembered the password [Reset Password](https://login.london.cloud.service.gov.uk/login)
+
+* Keep a copy of the new password in your Vault.
+
+* Assign the user to the space.
+
+
+```
+cf set-space-role <service account name>@digital.education.gov.uk dfe <space name > spaceauditor
+```
+
+## Temporary privileged access
+To allow rapid response to incidents, privilege escalation is done by the space managers. It is currently a manual process and they are responsible to
+revoke the privilege when it is not needed anymore. It is possible to
+[run a script](https://github.com/DFE-Digital/bat-infrastructure/blob/main/scripts/check-users-in-space-developer-role.ps1) regularly to confirm we
+only see the expected space users.
