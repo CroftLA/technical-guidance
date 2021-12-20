@@ -28,7 +28,15 @@ Git is a free and open source distributed version control system designed to han
 
 Terraform is an infrastructure as code (IaC) tool that allows you to build, change, and version infrastructure safely and efficiently.
 
+### Installation
 [Install Terraform](https://learn.hashicorp.com/tutorials/terraform/install-cli)
+
+### State
+Terraform keeps a register of all the resources it has created in a long json file called the _state file_. This allows keeping them under control to validate configuration, update or remove them. To work in a team and in automation, terraform provides [remote storage](https://www.terraform.io/language/state/remote) so the state can be shared.
+We recommend storing it as a [Blob Container within the Blob Storage Account](https://www.terraform.io/language/settings/backends/azurerm)
+
+Since the state is critical, we strongly recommend using [versioning](https://docs.microsoft.com/en-us/azure/storage/blobs/versioning-overview). This allows restoring the state in case it’s deleted or restoring a previous version in case it’s corrupted or updated by mistake (new terraform version for instance).
+[Soft delete for blobs](https://docs.microsoft.com/en-us/azure/storage/blobs/soft-delete-blob-overview) and [soft delete for containers](https://docs.microsoft.com/en-us/azure/storage/blobs/soft-delete-container-overview) are important too.
 
 ## Ruby
 
