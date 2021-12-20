@@ -6,39 +6,43 @@ weight: 30
 # <%= current_page.data.title %>
 
 ## Service accounts
-<%= partial( "partials/google_service_account" ) %>
+Automation requires creating a PaaS service account, which is a user account with its own email address, but not related to a human user.
 
-### Attach Gov.UK account to DFE Organisation
-* Using <%= service_now %>  request the creation of a new account.
+### Shared email
+The first step is to create a shared email account. See [Service accounts](/how-to/security/service-accounts/).
 
+### Create the GOV.UK PaaS user
+* Using <%= service_now %>, request the creation of a new account
 * Request Something
-
 * Non-standard
-
 * GOV.UK PaaS
-
 * Choose Request Type:  User Maintenance
-
 * Do you wish to Add a User, Remove a User or Assign a role to Existing User? Add User
-
-* Press the Add button and enter the details of the Google group, you created above.
-
+* Press the Add button and enter the details of the Google group, you created above
 * Submit
 
 ### Final steps
-* Once the user has been created, you will receive an email requiring that you set the password. If you do not get this mail or have not remembered the password [Reset Password](https://login.london.cloud.service.gov.uk/login)
+* Once the user has been created, you will receive an email requiring that you set the password
+* If you do not get this mail or have not remembered the password [Reset Password](https://login.london.cloud.service.gov.uk/login)
+* Keep a copy of the new password in your [Azure key vault](/how-to/security/managing-secrets/).
+* Assign the user to the space:
 
-* Keep a copy of the new password in your Vault.
-
-* Assign the user to the space.
-
-
-```
-cf set-space-role <service account name>@digital.education.gov.uk dfe <space name > spaceauditor
-```
+    ```
+    cf set-space-role <account name> dfe <space name> <space role>
+    ```
 
 ## Temporary privileged access
 To allow rapid response to incidents, privilege escalation is done by the space managers. It is currently a manual process and they are responsible to
 revoke the privilege when it is not needed anymore. It is possible to
 [run a script](https://github.com/DFE-Digital/bat-infrastructure/blob/main/scripts/check-users-in-space-developer-role.ps1) regularly to confirm we
 only see the expected space users.
+
+## Revoke privileged access automatically
+Privileged should not be permanent. You can run a script to remove user access on a daily basis.
+
+For example:
+
+- [Script](https://github.com/DFE-Digital/bat-infrastructure/blob/main/scripts/check-users-in-space-developer-role.ps1)
+- [Workflow](https://github.com/DFE-Digital/bat-infrastructure/blob/main/.github/workflows/check-users-in-space-developer-role.yml)
+
+This requires a service account with `SpaceManager` role to be able to unset user roles.
