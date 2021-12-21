@@ -15,17 +15,17 @@ We may not be accessing the site constantly so we need a tool to check the siteâ
 ### Tools
 
 * [Azure availability tests](/how-to/monitoring/#azure-availability)
-* StatusCake
+* [StatuCake](/how-to/monitoring/#statuscake)
 
 ## Alert when the service is degraded
 The site may be up and running, but it may be running slowly. Or some of the features may not be working as expected, for example user login. This may be because of dependencies out of our control, for example the Google API is inaccessible. We want to know where the issues are so we can focus our troubleshooting and implement a workaround.
 
 ### Tools 
-* StatusCake
+* [StatuCake](/how-to/monitoring/#statuscake)
 * [Azure Monitoring](/how-to/monitoring/#azure-monitoring)
 * Custom healthchecks
 * Custom smoke tests
-* Sentry
+* [Sentry](/how-to/monitoring/#sentry)
 
 ## Alert before a potential outage
 Sometimes there is a problem building up gradually that will eventually bring the site down. For example if an application has a memory leak, it will consume more and more memory until it fills up the available memory entirely. The app will cease to function.
@@ -35,7 +35,7 @@ This can be prevented by adding a threshold based monitor, which will alert us i
 ### Tools
 * [Azure Monitoring](/how-to/monitoring/#azure-monitoring)
 * AWS Cloudwatch
-* Prometheus with Alertmanager
+* [Prometheus](/how-to/monitoring/#prometheus)
 
 ## Help troubleshooting during/after an outage
 If something is wrong, we need data to investigate. This data may be essential:
@@ -45,14 +45,14 @@ If something is wrong, we need data to investigate. This data may be essential:
 * after the outage, to gather more data, investigate in detail and create a comprehensive post-mortem analysis.
 
 ### Tools 
-* Logit.io
+* [Logit.io](/how-to/monitoring/#logit)
 * Papertrail
 * [Azure Monitoring](/how-to/monitoring/#azure-monitoring)
 * AWS Cloudwatch
-* Prometheus with influxDB
-* Sentry
+* [Prometheus](/how-to/monitoring/#prometheus)
+* [Sentry](/how-to/monitoring/#sentry)
 * Skylight
-* StatusCake
+* [StatuCake](/how-to/monitoring/#statuscake)
 
 ## Show past, current and future usage
 The service is alive: it runs in the cloud and serves users. We may have questions such as:
@@ -68,11 +68,11 @@ The service is alive: it runs in the cloud and serves users. We may have questio
 The data should be available to answer these questions and it should be possible to visualise it in reports, graphs and dashboards.
 
 ### Tools 
-* Logit.io
+* [Logit.io](/how-to/monitoring/#logit)
 * [Azure Monitoring](/how-to/monitoring/#azure-monitoring)
 * [Azure Log Analysis](/how-to/monitoring/#azure-analysis)
 * AWS Cloudwatch
-* Prometheus with influxDB and Grafana
+* [Prometheus](/how-to/monitoring/#prometheus)
 * Skylight
 
 ## Alert when there is a failure in the deployment pipeline

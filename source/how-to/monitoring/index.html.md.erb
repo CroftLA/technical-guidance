@@ -24,6 +24,10 @@ This will not give you access to the project stacks, for that you will need to c
 * Becoming a Teacher - PAAS
 * Get Into Teaching
 
+### Further Reading
+* <%= link_to "Rails Logger" , "logit/rails_logger.html" %>
+* <%= link_to "Slack Integration" , "logit/slack.html" %>
+
 ### New Stack
 To create a new a new stack you need to raise a request with <%= digital_tools_support %>, providing them with the directorate ( Teaching Workforce Directory: TWD ) and project name. You will need to know the approximate amount of data and retention period. (This can be gathered from [Logit.io](http://logit.io/) )
 
@@ -42,15 +46,113 @@ This assumes a typical Rails application as it’s the vast majority in Teacher 
         * Use logstash-logger gem to send logs to [Logit.io](http://logit.io/) (we don’t have a method to send STDOUT logs to logit in Azure, so have to rely on logstasher running in the docker container)
 * Use [rails semantic logger](https://logger.rocketjob.io/) to make logs pretty
 
-
 ### Slack Alerts
 
 * <%= link_to "Configuring Logit with Slack alerts", "logit/slack.html" %>
 
 ## Prometheus / Grafana / Alertmanager
 
+<%= uk_gov_paas %> doesn’t provide monitoring tools natively. It provides logs and metrics which can be streamed to a separate monitoring solution.
+
+The prometheus ecosystem is a good fit for PaaS. It is made up of various components:
+
+### Exporters
+Provides metrics on the /metrics http endpoint
+
+### Prometheus
+Prometheus is the brains of the system providing the following functions.
+
+* scrap metrics from the exporters
+* store metrics in a database
+* manage threshold based alerts
+
+### Influxdb
+Is a time series database to store metrics
+
+### Alertmanager
+Receives alerts from prometheus and notifies users on various channels
+
+### Grafana
+Reads the metrics from various datasources including influxdb to create graphs and dashboards
+
+### Delivery
+We have created reusable terraform modules to deploy the whole [solution:](https://dfe-digital.github.io/cf-monitoring/)
+
 ## Sentry
+[Sentry.io](https://sentry.io/) is an open-source full-stack error tracking system which supports a wide range of server, browser, desktop and native mobile languages and frameworks.
 
 ## StatusCake
+Statuscake is a cloud based tool used to constantly monitor the availability of websites and alert when they are not present.
+
+## Access
+Statuscake can be accessed by creating an account at [https://www.statuscake.com](https://www.statuscake.com/) using your @digital.education.gov.uk email address.
+
+This will not give you access to the projects, for that you will need to contact <%= digital_tools_support %> and request access to the **DFESTATUSCAKE** subaccount.
+
+## Delivery
+Although manual configuration of a 'Uptime Monitoring Test' is possible we recomend that delivery is via terraform and uses the following sample:
+
+```
+provider "statuscake" {
+  username = local.infrastructure_secrets.SC-USERNAME
+  apikey   = local.infrastructure_secrets.SC-PASSWORD
+}
+
+alerts = {
+  GiT_App_Production_Healthcheck = {
+    website_name  = "Get Into Teaching Website (Production)"
+    website_url   = "https://getintoteaching.education.gov.uk/healthcheck.json"
+    test_type     = "HTTP"
+    check_rate    = 60
+    contact_group = [185037]
+    trigger_rate  = 0
+    confirmations = 1
+    custom_header = "{\"Content-Type\": \"application/x-www-form-urlencoded\"}"
+    status_codes  = "204, 205, 206, 303, 400, 401, 403, 404, 405, 406, 408, 410, 413, 444, 429, 494, 495, 496, 499, 500, 501, 502, 503, 504, 505, 506, 507, 508, 509, 510, 511, 521, 522, 523, 524, 520, 598, 599"
+
+  }
+}
+
+terraform {
+  required_version = ">= 0.13.4"
+
+  required_providers {
+    statuscake = {
+      source  = "StatusCakeDev/statuscake"
+      version = "1.0.1"
+    }
+  }
+```
 
 ## StatusPage
+The [Teacher services status page](https://teacher-services-status.education.gov.uk/) shows a basic status for each of the digital services in the extended Teacher services, including GiT and CPD. It shows the status and a history of response time for each site.
+
+When a site is down, it automatically created an incident as a Github issue, allowing to comment and track the issue. It is automaically closed when the site is up again.
+
+### Implementation
+It is based on the free [Upptime](https://upptime.js.org/) repository and uses only Github.
+
+A set of Github actions runs at regular intervals to update status, graphs, Github pages, and the code itself. Each job can be run [manually](https://github.com/DFE-Digital/teacher-services-upptime/actions/workflows/uptime.yml).
+
+The status is scheduled at 5 min interval, but this is variable and can sometimes be 15-30min. See [Uptime CI runs](https://github.com/DFE-Digital/teacher-services-upptime/actions/workflows/uptime.yml).
+
+The DNS domain [teacher-services-status.education.gov.uk](https://teacher-services-status.education.gov.uk/) was configured by Operations as a CNAME to ```http://dfe-digital.github.io.``` See [documentation](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site).
+
+### Configuration
+The configuration for our websites is done in .[upptimerc.yml](https://github.com/DFE-Digital/teacher-services-upptime/blob/master/.upptimerc.yml). It is updated via pull request to the repository.
+
+### Security
+The Github actions require a [Personal Access Token](https://docs.github.com/en/github/authenticating-to-github/keeping-your-account-and-data-secure/creating-a-personal-access-token) with write permissions to the [repository](https://github.com/DFE-Digital/teacher-services-upptime/). The token is stored in Github secret GH_PAT.
+
+In order to reduce the security risk to this repository only, the token is relative to service account teacher-services-upptime. It is a specific Github user which has write access to this repository only.
+
+The service account linked email is [teacher-services-upptime@digital.education.gov.uk](teacher-services-upptime@digital.education.gov.uk). It is a Google group whose owners are the TS infra engineers.
+
+The service account is part of our Github org and must have 2FA enabled. It is currently configured with Colin’s device.
+
+### Secrets
+The following secrets are stored in Azure keyvault ```s121p01-shared-kv``` (protected by PIM):
+
+* Github user password
+* Github user 2FA recovery codes
+* Github user token
