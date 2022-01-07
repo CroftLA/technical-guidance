@@ -6,18 +6,64 @@ review_in: 3 months
 
 # <%= current_page.data.title %>
 
-Introduction of a couple of paragraphs to explain why the thing you're
-writing a standard about is important.
+## Hello from the DfE content design community 🎉
 
-## User needs
+These are the standards we work to as content designers at DfE. 
 
-Why do we do this thing? Who is it helping?
+This guidance will help:
 
-## Principles
+* new content designer joining DfE understand our ways of working so that they can confidently get started
+* DfE staff understand how to work with content designers to delivery high quality guidance and services
+* any members of staff wanting to know what skills are required to become a content designer
 
-What broad approaches do we follow when we do this thing?
+We have the [Trello content design toolkit](https://trello.com/b/DwkYOqDi/content-design-toolkit-in-beta) and [the content design community](https://trello.com/b/lsijeDj5/dfe-content-designers-community) to support our profession.
 
-## Tools
+You can [find us and ask for us support on slack](https://ukgovernmentdfe.slack.com/archives/C6L4J5DK6).
 
-What specific bits of software (commercial or open source) do
-we use to help us do this thing?
+Our content design community is not restricted to the profession and we join up with our colleagues across other professions too.
+
+## Content design in government
+
+As content designers within the civil servies, we work to the standards published in: 
+
+* [Content creation and publishing guidance](https://www.gov.uk/guidance/content-designer)
+* [Service Manual](https://www.gov.uk/service-manual)
+* [Style guide](https://www.gov.uk/guidance/style-guide/a-to-z-of-gov-uk-style)
+
+We are part of the user-centred design profession family. [Find out more about what it takes to be a content designer](https://www.gov.uk/guidance/content-designer).
+
+We have a DfE wide [communications strategy](https://educationgovuk.sharepoint.com/sites/how-do-i/SitePages/communications-dfe-govuk-content-strategy.aspx), which we also need to use when creating content. 
+
+Our general ways of working:
+
+* user needs, start with them and remember they will change over time
+* it's not just about the words, what action do we want users to take
+* accessibility, it's the law, get it right
+* how to write well [(use Hemmingway Editor)](https://hemingwayapp.com/)
+* test with users, get feedback and iterate
+* save your work, work in a sustainable and scalable way
+* monitor anlytics and performance, continue to iterate and improve
+
+## Publishing on GOV.UK
+
+The [digital communications team](https://educationgovuk.sharepoint.com/sites/how-do-i/SitePages/communications-publish-gov-uk.aspx) have provided a guide on what you need to do in order to get content published on GOV.UK
+
+They also have published the DFE content strategy which is worth a read to [understand how we (DfE) approach content on GOV.UK](https://educationgovuk.sharepoint.com/sites/how-do-i/SitePages/communications-dfe-govuk-content-strategy.aspx).
+
+If you do not have access to the guidance please email the team: [insert]
+
+These are the principles we use:
+
+* only create content where there’s a proven user need
+* design content for the user need by ensuring:
+     * it only includes what the user needs to know
+     * it doesn't have a lengthy policy introduction
+     * it doesn't explain why something is the way it is in great detail
+     * it's structured around what users need to know and the headings reflect that
+* create content in the format that the user needs it to be in; HTML should be the default (depending on the user need) as it's the most usable and most accessible
+* write in plain English and use the language that our audience use to make it easier for people to read and understand
+* ensure it’s in the correct GOV.UK format and in GOV.UK style
+
+This list also shows the order of importance of these principles, if we’re unable to meet them all with a specific request or project. For example, we’d rather publish something designed around users’ needs that’s usable and easy to read that doesn’t 100% follow GOV.UK style than to have something that doesn’t meet users’ needs.
+
+GOV.UK users will spot bad content before they notice style inconsistencies across the whole site.
